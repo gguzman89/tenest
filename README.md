@@ -51,6 +51,7 @@ Si bien el núcleo de este proyecto es abierto para la comunidad, está diseñad
 
 ```bash
 $ yarn install
+$ completar variables de entorno .env
 ```
 
 ## Compile and run the project
