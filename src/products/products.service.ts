@@ -1,13 +1,17 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Repository } from 'typeorm';
+import { PaginationDTO } from 'src/common/dtos/pagination.dto';
+import { validate as isUUID } from 'uuid'
 
 @Injectable()
 export class ProductsService {
+
+  private readonly logger = new Logger('ProductsService');
 
   constructor(
 
@@ -25,26 +29,70 @@ export class ProductsService {
 
       return product;
     } catch (error) {
-
-      console.log(error); // log inside nosotros
-      throw new InternalServerErrorException('Ayuda!')
+      this.handleDBExceptions(error)
     }
 
   }
 
-  findAll() {
-    return `This action returns all products`;
+  async findAll(paginationDto: PaginationDTO) {
+
+    const { limit = 10, offset = 5 } = paginationDto
+
+    return await this.productRepository.find({
+      take: limit,
+      skip: offset,
+      //TODO: relaciones
+      order: {
+        slug: 1
+      }
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
+  async findOne(term: string) {
+
+    // console.log(id);
+
+    let product: Product;
+
+    if (isUUID(term)) {
+      product = await this.productRepository.findOneBy({ id: term })
+    } else {
+      // product = await this.productRepository.findOneBy({ slug: term })
+      const queryBuilder = this.productRepository.createQueryBuilder();
+      product = await queryBuilder
+        .where(`LOWER(title) =:title or slug =:slug`, {
+          title: term.toLowerCase(),
+          slug: term.toLowerCase()
+        }).getOne();
+
+    }
+
+    // const product = await this.productRepository.findBy({ id })
+    if (!product) throw new NotFoundException(`Product not found w/ ${term}`)
+
+    return product;
   }
 
   update(id: number, updateProductDto: UpdateProductDto) {
     return `This action updates a #${id} product`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  async remove(id: string) {
+
+    const { affected, } = await this.productRepository.delete({ id })
+
+    if (affected === 0) throw new BadRequestException(`Product with ID not found`)
+
+    return;
+  }
+
+  private handleDBExceptions(error: any) {
+
+    if (error.code === '23505')
+      throw new BadRequestException(error.detail)
+
+    this.logger.error(error); // log inside nosotros
+    // console.log(error);
+    throw new InternalServerErrorException('Unexpected error, check server logs')
   }
 }
