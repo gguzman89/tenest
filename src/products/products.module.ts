@@ -13,6 +13,10 @@ import { Product, ProductImage } from './entities';
       Product,
       ProductImage
     ])
+  ],
+  exports: [
+    ProductsService,
+    TypeOrmModule // use case: productRepository, productImageRepository
   ]
 })
 export class ProductsModule { }

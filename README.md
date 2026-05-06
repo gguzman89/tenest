@@ -63,6 +63,8 @@ $ yarn run start
 # watch mode & DB
 $ docker compose up -d
 $ yarn run start:dev
+$ ejecutar el SEED
+localhost://localhost:3000/api/seed
 
 # production mode
 $ yarn run start:prod
