@@ -5,7 +5,7 @@ import { ProductImage } from "./product-image.entity";
 
 
 
-@Entity()
+@Entity({ name: 'products' })
 export class Product {
 
   @PrimaryGeneratedColumn('uuid')
