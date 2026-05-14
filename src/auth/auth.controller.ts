@@ -1,10 +1,13 @@
-import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, SetMetadata } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto } from './dto';
-import { GetUser } from './decorators/get-user.decorator';
+import { GetUser, RawHeaders } from './decorators';
 import { User } from './entities/user.entity';
+import { UserRoleGuard } from './guards/user-role/user-role.guard';
+import { RoleProtected } from './decorators/role-protected/role-protected.decorator';
+import { ValidRoles } from './interfaces/valid-roles';
 
 
 @Controller('auth')
@@ -24,8 +27,11 @@ export class AuthController {
   @Get('private')
   @UseGuards(AuthGuard())
   testingPrivateRoute(
-    // @Req() request: Express.Request
-    @GetUser() user: User
+    // @Req() request: Express.Request,
+    @GetUser() user: User,
+    @GetUser('email') userEmail: string,
+
+    @RawHeaders() rawHeaders: string[]
   ) {
 
     // console.log(request);
@@ -35,7 +41,23 @@ export class AuthController {
       ok: true,
       msg: 'Hola mundo private',
       user,
+      userEmail,
+      rawHeaders
     };
+  }
+  // @SetMetadata('roles', ['admin', 'super-user'])
+
+  @Get('private2')
+  @RoleProtected(ValidRoles.superUser,)
+  @UseGuards(AuthGuard(), UserRoleGuard) // Authenticate | Authorize
+  privateRoute2(
+    @GetUser() user: User,
+  ) {
+
+    return {
+      ok: true,
+      user
+    }
   }
 
 }
