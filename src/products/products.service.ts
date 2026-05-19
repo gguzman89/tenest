@@ -57,9 +57,6 @@ export class ProductsService {
       }
     });
 
-    console.log(products);
-
-
     return products.map(product => ({
       ...product,
       images: product.images.map(img => img.url)
